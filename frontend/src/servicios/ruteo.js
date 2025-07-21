@@ -1,8 +1,7 @@
 import polyline from "@mapbox/polyline";
 
 export async function getRutaConMetricas(origen, destino) {
-  const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjMzMGUzOGIyZWY0NzRjZTI5ZWU2MTk1MTNjODhhOGFkIiwiaCI6Im11cm11cjY0In0="; // ⚠️ Reemplazá por tu clave válida
-
+const ORS_API_KEY = process.env.ORS_API_KEY;
   const url = "https://api.openrouteservice.org/v2/directions/driving-car";
 
   const body = {
