@@ -34,7 +34,7 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
 
 
     const API_URL = import.meta.env.PUBLIC_API_URL;
-const res = await fetch(`${API_URL}/asignar`, {
+const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ zona, tipo_via, distancia_km }),
