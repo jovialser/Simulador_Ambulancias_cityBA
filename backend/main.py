@@ -5,9 +5,14 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # 👇 Agregamos el middleware CORS
+from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://simulador-ambulancias-city-ba.vercel.app/"],  # Solo permite acceso desde Astro en localhost
+    allow_origins=[
+        "https://tu-app.vercel.app",  # Reemplazá con tu dominio real en Vercel
+        "http://localhost:4321"       # Para pruebas locales
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
