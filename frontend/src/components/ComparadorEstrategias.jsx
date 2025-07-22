@@ -61,4 +61,28 @@ export default function ComparadorEstrategias({ zona, tipo_via, distancia_km }) 
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         {tradicional && (
           <div style={tarjetaEstilo}>
+            <h3>📐 Tradicional</h3>
+            <p><strong>Ambulancia:</strong> {tradicional.ambulancia}</p>
+            <p><strong>ETA:</strong> {tradicional.eta_minutos} min</p>
+            <p><strong>Zona:</strong> {tradicional.zona}</p>
+            <p><strong>Tipo de vía:</strong> {tradicional.tipo_via}</p>
+            <p><strong>Centro:</strong> {tradicional.centro || "N/A"}</p>
+            <p><strong>Justificación:</strong> ETA más baja + disponibilidad</p>
+          </div>
+        )}
 
+        {inteligente && (
+          <div style={tarjetaEstilo}>
+            <h3>🤖 Inteligente (IA)</h3>
+            <p><strong>Ambulancia:</strong> {inteligente.ambulancia}</p>
+            <p><strong>ETA:</strong> {inteligente.eta_minutos} min</p>
+            <p><strong>Zona:</strong> {inteligente.zona}</p>
+            <p><strong>Tipo de vía:</strong> {inteligente.tipo_via}</p>
+            <p><strong>Centro:</strong> {inteligente.centro}</p>
+            <p><strong>Justificación:</strong> {inteligente.justificacion}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
