@@ -33,12 +33,23 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
     const distancia_km = parseFloat(e.target.distancia_km.value);
 
 
-    const API_URL = import.meta.env.PUBLIC_API_URL;
-const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ zona, tipo_via, distancia_km }),
-});
+try {
+  const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zona, tipo_via, distancia_km }),
+  });
+
+  if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+
+  const datos = await res.json();
+  console.log("✅ Respuesta del backend:", datos);
+  setResultado(datos);
+  // resto del código...
+} catch (error) {
+  console.error("❌ Error al conectar con el backend:", error);
+}
+
 
     const datos = await res.json();
     setResultado(datos);
