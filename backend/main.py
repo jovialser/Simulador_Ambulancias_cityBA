@@ -7,7 +7,7 @@ app = FastAPI()
 # 👇 Agregamos el middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4321"],  # Solo permite acceso desde Astro en localhost
+    allow_origins=["https://simulador-ambulancias-city-ba.vercel.app/"],  # Solo permite acceso desde Astro en localhost
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
