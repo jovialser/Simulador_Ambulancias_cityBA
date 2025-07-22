@@ -26,69 +26,51 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
     return "Centro Sur";
   }
 
-  const enviar = async (e) => {
-    e.preventDefault();
-    const zona = e.target.zona.value;
-    const tipo_via = e.target.tipo_via.value;
-    const distancia_km = parseFloat(e.target.distancia_km.value);
+const enviar = async (e) => {
+  e.preventDefault();
+  const zona = e.target.zona.value;
+  const tipo_via = e.target.tipo_via.value;
+  const distancia_km = parseFloat(e.target.distancia_km.value);
 
+  let datos;
+  try {
+    const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zona, tipo_via, distancia_km })
+    });
 
-try {
-  const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ zona, tipo_via, distancia_km }),
-  });
+    if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
 
-  if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+    datos = await res.json();
+    console.log("✅ Respuesta del backend:", datos);
+    setResultado(datos);
+  } catch (error) {
+    console.error("❌ Error al conectar con el backend:", error.message);
+    return; // ⛔ Cancelar resto si hay error
+  }
 
-  const datos = await res.json();
-  console.log("✅ Respuesta del backend:", datos);
-  setResultado(datos);
-  // resto del código...
-} catch (error) {
-  console.error("❌ Error al conectar con el backend:", error);
-}
+  const centro = determinarCentro(zona);
+  const origenCoords = coordenadasCentro[centro];
+  const destinoCoords = coordenadasZona[zona];
 
+  if (onCoordenadasSeleccionadas) {
+    console.log("🛰️ Emitiendo coordenadas:", origenCoords, destinoCoords);
+    onCoordenadasSeleccionadas({ origen: origenCoords, destino: destinoCoords });
+  }
 
-try {
-  const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ zona, tipo_via, distancia_km })
-  });
-
-  if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
-
-  const datos = await res.json();
-  setResultado(datos);
-  console.log("✅ Datos recibidos y guardados:", datos);
-} catch (error) {
-  console.error("❌ Error al conectar con el backend:", error.message);
-}
-
-
-    const centro = determinarCentro(zona);
-    const origenCoords = coordenadasCentro[centro];
-    const destinoCoords = coordenadasZona[zona];
-
-    // 🔁 Pasamos coords al componente superior (como index.astro)
-    if (onCoordenadasSeleccionadas) {
-  console.log("🛰️ Emitiendo coordenadas:", origenCoords, destinoCoords);
-  onCoordenadasSeleccionadas({ origen: origenCoords, destino: destinoCoords });
-}
-
-    const simulacion = {
-      id: datos.ambulancia,
-      zona: datos.zona,
-      tipo_via: datos.tipo_via,
-      eta_minutos: datos.eta_minutos,
-      centro: determinarCentro(datos.zona),
-      excedido: false
-    };
-
-    setHistorial(prev => [...prev, simulacion]);
+  const simulacion = {
+    id: datos.ambulancia,
+    zona: datos.zona,
+    tipo_via: datos.tipo_via,
+    eta_minutos: datos.eta_minutos,
+    centro: determinarCentro(datos.zona),
+    excedido: false
   };
+
+  setHistorial(prev => [...prev, simulacion]);
+};
+
 
   return (
     <div>
