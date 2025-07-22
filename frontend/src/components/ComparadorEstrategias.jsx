@@ -8,7 +8,7 @@ export default function ComparadorEstrategias({ zona, tipo_via, distancia_km }) 
     async function comparar() {
       const payload = { zona, tipo_via, distancia_km };
 
-      const resTrad = await fetch("http://localhost:8000/asignar", {
+      const resTrad = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -16,7 +16,7 @@ export default function ComparadorEstrategias({ zona, tipo_via, distancia_km }) 
       const datosTrad = await resTrad.json();
       setTradicional(datosTrad);
 
-      const resIA = await fetch("http://localhost:8000/asignar-ia", {
+      const resIA = await fetch("https://simulador-backend-fauv.onrender.com/asignar-ia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
