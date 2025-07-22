@@ -51,8 +51,22 @@ try {
 }
 
 
-    const datos = await res.json();
-    setResultado(datos);
+try {
+  const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zona, tipo_via, distancia_km })
+  });
+
+  if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+
+  const datos = await res.json();
+  setResultado(datos);
+  console.log("✅ Datos recibidos y guardados:", datos);
+} catch (error) {
+  console.error("❌ Error al conectar con el backend:", error.message);
+}
+
 
     const centro = determinarCentro(zona);
     const origenCoords = coordenadasCentro[centro];
