@@ -71,7 +71,8 @@ def asignar_ambulancia_ia(datos: Emergencia):
 @app.post("/ruta-ors")
 def obtener_ruta(datos: CoordenadasRuta):
     ORS_API_KEY = os.getenv("ORS_API_KEY")
-
+    print("🔑 ORS_API_KEY:", ORS_API_KEY)
+    
     if not ORS_API_KEY:
         return {"error": "🚫 ORS_API_KEY no está configurada en entorno"}
 
