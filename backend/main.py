@@ -71,7 +71,7 @@ def asignar_ambulancia_ia(datos: Emergencia):
 # 🛣️ Nuevo endpoint: ruteo con ORS desde backend
 @app.post("/ruta-ors")
 def obtener_ruta(datos: CoordenadasRuta):
-    ORS_API_KEY = "TU_CLAVE_ORS_AQUI"  # 🔒 Reemplazá por tu clave real
+    ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjMzMGUzOGIyZWY0NzRjZTI5ZWU2MTk1MTNjODhhOGFkIiwiaCI6Im11cm11cjY0In0="  # 🔒 Reemplazá por tu clave real
 
     headers = {
         "Authorization": ORS_API_KEY,
