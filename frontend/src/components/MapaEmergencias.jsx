@@ -1,79 +1,64 @@
-import { useEffect } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useState } from "react";
+import SimuladorForm from "./SimuladorForm.jsx";
+import MapaEmergencias from "./MapaEmergencias.jsx";
 
-import iconUrl from "leaflet/dist/images/marker-icon.png";
-import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+// 📍 Centros médicos por municipio
+const centrosMedicos = {
+  "Ciudad de Buenos Aires": [-34.607, -58.449],
+  "Lanús": [-34.706, -58.398],
+  "Quilmes": [-34.720, -58.264],
+  "San Martín": [-34.575, -58.552],
+  "Tres de Febrero": [-34.605, -58.563],
+  "La Matanza": [-34.640, -58.610]
+};
 
-L.Marker.prototype.options.icon = L.icon({
-  iconUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+export default function RutaVisual() {
+  const [simulacion, setSimulacion] = useState(null);
+  const [municipioSeleccionado, setMunicipioSeleccionado] = useState(null);
 
-import { getRutaConMetricas } from "../servicios/ruteo.js";
+  function actualizar(simulacionCompleta) {
+    setSimulacion(simulacionCompleta);
+  }
 
-export default function MapaEmergencias({ origen, destino }) {
-  useEffect(() => {
-    console.log("🧭 Coordenadas recibidas:", { origen, destino });
+  function actualizarMunicipio(m) {
+    setMunicipioSeleccionado(m);
+    setSimulacion(null); // reset simulación al cambiar municipio
+  }
 
-    if (
-      !Array.isArray(origen) ||
-      !Array.isArray(destino) ||
-      origen.length !== 2 ||
-      destino.length !== 2
-    ) {
-      console.warn("⚠️ Coordenadas inválidas. No se puede renderizar el mapa.");
-      return;
-    }
-
-    // ❗ Evitar conflicto con múltiples inicializaciones
-    const container = L.DomUtil.get("mapa");
-    if (container && container._leaflet_id) {
-      container._leaflet_id = null;
-    }
-
-    // 🗺️ Inicializar mapa
-    const map = L.map("mapa").setView(origen, 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors"
-    }).addTo(map);
-
-    L.marker(origen).addTo(map).bindPopup("🚑 Centro");
-    L.marker(destino).addTo(map).bindPopup("⚠️ Emergencia");
-
-    // 🛣️ Trazar ruta
-    async function trazarRuta() {
-      try {
-        const resultado = await getRutaConMetricas(origen, destino);
-
-        if (!resultado || !resultado.ruta) {
-          console.warn("⚠️ No se obtuvo ruta válida.");
-          return;
-        }
-
-        const { ruta, distancia, duracion } = resultado;
-
-        L.polyline(ruta, { color: "blue", weight: 4 }).addTo(map);
-        console.log(
-          `🛣️ Ruta trazada | Distancia: ${distancia.toFixed(0)} m | Duración: ${(duracion / 60).toFixed(1)} min`
-        );
-      } catch (error) {
-        console.error("❌ Error en trazarRuta:", error.message);
-      }
-    }
-
-    trazarRuta();
-  }, [origen, destino]);
+  const centroMedicoCoords = municipioSeleccionado ? centrosMedicos[municipioSeleccionado] : null;
 
   return (
-    <div style={{ width: "100%", height: "400px", marginTop: "1rem" }}>
-      <h3>🗺️ Mapa Emergencias</h3>
-      <div id="mapa" style={{ width: "100%", height: "100%" }}></div>
+    <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+      <div style={{ flex: 1, minWidth: "300px" }}>
+        <SimuladorForm
+          onCoordenadasSeleccionadas={actualizar}
+          onMunicipioSeleccionado={actualizarMunicipio}
+        />
+      </div>
+
+      <div style={{ flex: 1, minWidth: "300px" }}>
+        {centroMedicoCoords && !simulacion && (
+          <>
+            <h3>🏥 Centro médico: {municipioSeleccionado}</h3>
+            <MapaEmergencias origen={centroMedicoCoords} destino={null} />
+          </>
+        )}
+
+        {simulacion && (
+          <>
+            <p>📍 Dirección geocodificada: <strong>{simulacion.direccion}</strong></p>
+            <MapaEmergencias
+              origen={simulacion.origen}
+              destino={simulacion.destino}
+              ruta={simulacion.ruta}
+              distancia={simulacion.distancia}
+              duracion={simulacion.duracion}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }
+
 
