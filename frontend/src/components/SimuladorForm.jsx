@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import MetricasEficiencia from './MetricasEficiencia.jsx';
-import { getRutaConMetricas } from '../utils/ruteo.js';
+import { getRutaConMetricas } from '../scripts/ruteo.js';
 
 export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
   const [direccion, setDireccion] = useState("");
