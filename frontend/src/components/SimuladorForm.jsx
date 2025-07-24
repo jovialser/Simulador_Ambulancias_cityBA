@@ -2,6 +2,22 @@ import { useState } from 'react';
 import MetricasEficiencia from './MetricasEficiencia.jsx';
 import ComparadorEstrategias from './ComparadorEstrategias.jsx';
 
+<button onClick={activarBackend}>⚙️ Activar Backend</button>
+async function activarBackend() {
+  try {
+    const res = await fetch("https://simulador-backend-fauv.onrender.com/");
+    if (res.ok) {
+      alert("✅ Backend activado y listo para usar");
+    } else {
+      alert("⚠️ No se pudo activar el backend");
+    }
+  } catch (err) {
+    console.error("❌ Error al activar backend:", err.message);
+    alert("Error al despertar el backend");
+  }
+}
+
+
 export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
   const [resultado, setResultado] = useState(null);
   const [historial, setHistorial] = useState([]);
