@@ -3,44 +3,45 @@ import polyline from "@mapbox/polyline";
 export async function getRutaConMetricas(origen, destino) {
   const url = "https://simulador-backend-fauv.onrender.com/ruta-ors";
 
-  const body = {
+  const payload = {
     origen,   // [lat, lng]
     destino   // [lat, lng]
   };
 
   try {
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`❌ Backend respondió con error ${res.status}: ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`❌ Error ${response.status}: ${errorText}`);
     }
 
-    const data = await res.json();
-    const rutaCodificada = data.routes?.[0]?.geometry;
-    const resumen = data.routes?.[0]?.summary;
+    const data = await response.json();
+    const geometry = data.routes?.[0]?.geometry;
+    const summary = data.routes?.[0]?.summary;
 
-    if (!rutaCodificada || !resumen) {
-      console.warn("⚠️ Respuesta del backend incompleta:", data);
-      throw new Error("❌ El backend no devolvió geometría ni métricas válidas.");
+    if (!geometry || !summary) {
+      console.warn("⚠️ Respuesta incompleta del backend:", data);
+      throw new Error("❌ Geometría o métricas faltantes en la ruta.");
     }
 
-    const rutaDecodificada = polyline.decode(rutaCodificada); // [lat, lng]
-    const distanciaMetros = resumen.distance;
-    const duracionSegundos = resumen.duration;
+    const rutaDecodificada = polyline.decode(geometry); // Devuelve [lat, lng]
+    const distancia = summary.distance;  // en metros
+    const duracion = summary.duration;  // en segundos
 
     return {
       ruta: rutaDecodificada,
-      distancia: distanciaMetros,
-      duracion: duracionSegundos
+      distancia,
+      duracion
     };
   } catch (err) {
     console.error("🧯 Error en getRutaConMetricas:", err.message);
     throw err;
   }
 }
+
 
