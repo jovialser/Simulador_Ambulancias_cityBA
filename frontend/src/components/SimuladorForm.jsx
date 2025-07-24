@@ -3,20 +3,7 @@ import MetricasEficiencia from './MetricasEficiencia.jsx';
 import ComparadorEstrategias from './ComparadorEstrategias.jsx';
 
 export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
-  async function activarBackend() {
-    try {
-      const res = await fetch("https://simulador-backend-fauv.onrender.com/");
-      if (res.ok) alert("✅ Backend activado");
-    } catch (err) {
-      alert("❌ Error al activar backend");
-    }
-  }
-  return (
-    <div>
-      <button onClick={activarBackend}>⚙️ Activar Backend</button>
-      {/* ...resto del formulario... */}
-    </div>
-  );
+
   const [resultado, setResultado] = useState(null);
   const [historial, setHistorial] = useState([]);
 
