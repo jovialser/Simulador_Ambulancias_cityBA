@@ -6,7 +6,7 @@ import os
 
 app = FastAPI()
 
-# 👉 Middleware CORS
+# 🔓 CORS para permitir frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -18,60 +18,55 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 👉 Endpoint base
+# 🟢 Endpoint base
 @app.get("/")
 def inicio():
     return {"mensaje": "Backend del simulador activo"}
 
-# 👉 Modelos
-class Emergencia(BaseModel):
-    zona: str
-    tipo_via: str
-    distancia_km: float
-
+# 📌 Modelo de coordenadas
 class CoordenadasRuta(BaseModel):
     origen: list  # [lat, lng]
     destino: list  # [lat, lng]
 
-# 👉 Utilidad ETA
-def calcular_eta(distancia_km, tipo_via):
-    velocidad = 60 if tipo_via == "avenida" else 40
-    eta = (distancia_km / velocidad) * 60
-    return round(eta, 2)
+# 📌 Modelo de dirección
+class Direccion(BaseModel):
+    texto: str  # Ej: "Av. Córdoba 2350, CABA"
 
-# 👉 Endpoint tradicional
-@app.post("/asignar")
-def asignar_ambulancia(datos: Emergencia):
-    eta = calcular_eta(datos.distancia_km, datos.tipo_via)
-    ambulancia = f"AMB-{hash(datos.zona) % 100:02d}"
-    return {
-        "ambulancia": ambulancia,
-        "zona": datos.zona,
-        "tipo_via": datos.tipo_via,
-        "eta_minutos": eta
+# 🌍 Geocodificación: texto → coordenadas
+@app.post("/geocodificar")
+def geocodificar(direccion: Direccion):
+    ORS_API_KEY = os.getenv("ORS_API_KEY")
+    url = "https://api.openrouteservice.org/geocode/search"
+    params = {
+        "api_key": ORS_API_KEY,
+        "text": direccion.texto,
+        "size": 1
     }
+    res = requests.get(url, params=params)
 
-# 👉 Endpoint IA
-@app.post("/asignar-ia")
-def asignar_ambulancia_ia(datos: Emergencia):
-    eta = calcular_eta(datos.distancia_km, datos.tipo_via) * 0.9
-    ambulancia = f"AMB-{(hash(datos.zona) + 42) % 100:02d}"
-    centro = "Centro Sur" if datos.zona in ["Barracas", "Caballito"] else "Centro Norte"
-    justificacion = "Asignación basada en demanda histórica y reserva estratégica"
-    return {
-        "ambulancia": ambulancia,
-        "zona": datos.zona,
-        "tipo_via": datos.tipo_via,
-        "eta_minutos": round(eta, 2),
-        "centro": centro,
-        "justificacion": justificacion
-    }
+    if res.status_code != 200:
+        return {
+            "error": f"Geocodificación falló ({res.status_code})",
+            "detalle": res.text
+        }
 
-# 🛣️ Nuevo endpoint: ruteo con ORS desde backend
+    data = res.json()
+    try:
+        coords = data["features"][0]["geometry"]["coordinates"]  # [lng, lat]
+        etiqueta = data["features"][0]["properties"]["label"]
+        return {
+            "lat": coords[1],
+            "lng": coords[0],
+            "direccion_normalizada": etiqueta
+        }
+    except:
+        return {"error": "No se pudo extraer coordenadas"}
+
+# 🛣️ Trazado de ruta entre dos coordenadas
 @app.post("/ruta-ors")
 def obtener_ruta(datos: CoordenadasRuta):
     ORS_API_KEY = os.getenv("ORS_API_KEY")
-    
+
     if not ORS_API_KEY:
         return {"error": "🚫 ORS_API_KEY no está configurada en entorno"}
 
@@ -100,3 +95,4 @@ def obtener_ruta(datos: CoordenadasRuta):
         }
 
     return response.json()
+
