@@ -11,30 +11,29 @@ import RutaVisual from "../components/RutaVisual.jsx";
   <body style="padding: 1rem; font-family: sans-serif;">
     <h1>🚑 Simulador de Emergencia</h1>
 
-<!-- 🔘 Botón visible al cargar -->
-    <section style="margin: 1.5rem 0;">
-      <button onclick="activarBackend()" style="padding: 0.8rem 1.2rem; font-size: 1rem; background: #0077cc; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        ⚙️ Activar Backend
-      </button>
-    </section>
+<section id="backend-status" style="margin: 1.5rem 0;">
+  <button id="activar-btn" onclick="activarBackend()" style="padding: 0.8rem 1.2rem; font-size: 1rem; background: #0077cc; color: white; border: none; border-radius: 6px; cursor: pointer;">
+    ⚙️ Activar Backend
+  </button>
+</section>
 
-    <!-- Contiene formulario, lógica y visualización -->
-    <RutaVisual client:only="react" />
 <script>
-      async function activarBackend() {
-        try {
-          const res = await fetch("https://simulador-backend-fauv.onrender.com/");
-          if (res.ok) {
-            alert("✅ Backend activado correctamente");
-          } else {
-            alert("⚠️ No se pudo activar el backend");
-          }
-        } catch (err) {
-          console.error("❌ Error al despertar backend:", err.message);
-          alert("Error al intentar activar el backend");
-        }
+  async function activarBackend() {
+    const boton = document.getElementById("activar-btn");
+    try {
+      const res = await fetch("https://simulador-backend-fauv.onrender.com/");
+      if (res.ok) {
+        const contenedor = document.getElementById("backend-status");
+        contenedor.innerHTML = `<p style="color: green; font-weight: bold;">✅ Backend listo y operativo</p>`;
+      } else {
+        alert("⚠️ No se pudo activar el backend");
       }
-    </script>
+    } catch (err) {
+      console.error("❌ Error al despertar backend:", err.message);
+      alert("Error al intentar activar el backend");
+    }
+  }
+</script>
 
   </body>
 </html>
