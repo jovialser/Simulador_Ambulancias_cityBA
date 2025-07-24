@@ -6,7 +6,7 @@ import os
 
 app = FastAPI()
 
-# 🔓 CORS para permitir frontend
+# 🔓 Permitir frontend en CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -23,16 +23,18 @@ app.add_middleware(
 def inicio():
     return {"mensaje": "Backend del simulador activo"}
 
-# 📌 Modelo de coordenadas
+# 📌 Modelos
 class CoordenadasRuta(BaseModel):
     origen: list  # [lat, lng]
     destino: list  # [lat, lng]
 
-# 📌 Modelo de dirección
 class Direccion(BaseModel):
-    texto: str  # Ej: "Av. Córdoba 2350, CABA"
+    texto: str
 
-# 🌍 Geocodificación: texto → coordenadas
+class TextoBusqueda(BaseModel):
+    texto: str
+
+# 🌍 Geocodificación → coordenadas
 @app.post("/geocodificar")
 def geocodificar(direccion: Direccion):
     ORS_API_KEY = os.getenv("ORS_API_KEY")
@@ -52,7 +54,7 @@ def geocodificar(direccion: Direccion):
 
     data = res.json()
     try:
-        coords = data["features"][0]["geometry"]["coordinates"]  # [lng, lat]
+        coords = data["features"][0]["geometry"]["coordinates"]
         etiqueta = data["features"][0]["properties"]["label"]
         return {
             "lat": coords[1],
@@ -62,7 +64,27 @@ def geocodificar(direccion: Direccion):
     except:
         return {"error": "No se pudo extraer coordenadas"}
 
-# 🛣️ Trazado de ruta entre dos coordenadas
+# 🧠 Autocompletado predictivo (proxy ORS)
+@app.post("/autocomplete")
+def autocomplete(texto: TextoBusqueda):
+    ORS_API_KEY = os.getenv("ORS_API_KEY")
+    url = "https://api.openrouteservice.org/geocode/autocomplete"
+    params = {
+        "api_key": ORS_API_KEY,
+        "text": texto.texto,
+        "size": 5
+    }
+    res = requests.get(url, params=params)
+
+    if res.status_code != 200:
+        return {
+            "error": f"Autocompletado falló ({res.status_code})",
+            "detalle": res.text
+        }
+
+    return res.json()
+
+# 🛣️ Ruta entre coordenadas
 @app.post("/ruta-ors")
 def obtener_ruta(datos: CoordenadasRuta):
     ORS_API_KEY = os.getenv("ORS_API_KEY")
@@ -95,4 +117,3 @@ def obtener_ruta(datos: CoordenadasRuta):
         }
 
     return response.json()
-
