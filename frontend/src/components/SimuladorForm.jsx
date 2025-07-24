@@ -3,72 +3,58 @@ import Select from 'react-select';
 import MetricasEficiencia from './MetricasEficiencia.jsx';
 import { getRutaConMetricas } from '../servicios/ruteo.js';
 
-const municipios = [
-  "Ciudad de Buenos Aires",
-  "Lanús",
-  "Quilmes",
-  "San Martín",
-  "Tres de Febrero",
-  "La Matanza"
-];
+// 📍 Centros médicos por municipio
+const centrosMedicos = {
+  "Ciudad de Buenos Aires": [-34.607, -58.449],
+  "Lanús": [-34.706, -58.398],
+  "Quilmes": [-34.720, -58.264],
+  "San Martín": [-34.575, -58.552],
+  "Tres de Febrero": [-34.605, -58.563],
+  "La Matanza": [-34.640, -58.610]
+};
+
+const municipios = Object.keys(centrosMedicos);
 
 export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
   const [municipio, setMunicipio] = useState(null);
   const [direccionInput, setDireccionInput] = useState("");
-  const [sugerencias, setSugerencias] = useState([]);
   const [resultado, setResultado] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const destinoCoords = [-34.607, -58.449]; // Centro médico fijo
-
-  // 🔍 Buscar sugerencias predictivas desde backend
-  async function buscarSugerencias(texto, partido) {
-    if (!texto || !partido) return;
-
-    const query = `${texto}, ${partido}, Buenos Aires, Argentina`;
-
-    try {
-      const res = await fetch("https://simulador-backend-fauv.onrender.com/autocomplete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto: query })
-      });
-
-      if (!res.ok) throw new Error(`Error backend: ${res.status}`);
-
-      const data = await res.json();
-
-      if (!Array.isArray(data.features)) {
-        console.warn("⚠️ No se encontraron sugerencias.");
-        setSugerencias([]);
-        return;
-      }
-
-      const opciones = data.features
-        .filter(f => f.properties?.confidence >= 0.8)
-        .map(f => ({
-          label: f.properties.label,
-          value: f.geometry.coordinates
-        }));
-
-      setSugerencias(opciones);
-    } catch (err) {
-      console.error("❌ Error en autocompletado:", err.message);
-      setSugerencias([]);
-    }
-  }
-
-  async function simularEmergencia(coords, label) {
+  async function simularEmergencia() {
     setLoading(true);
     setResultado(null);
 
+    if (!municipio || !direccionInput) {
+      alert("⚠️ Seleccioná municipio y completá la dirección.");
+      setLoading(false);
+      return;
+    }
+
+    const destinoCoords = centrosMedicos[municipio];
+    const direccionCompleta = `${direccionInput}, ${municipio}, Buenos Aires, Argentina`;
+
     try {
-      const origenCoords = [coords[1], coords[0]]; // [lat, lng]
+      const res = await fetch("https://simulador-backend-fauv.onrender.com/geocodificar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto: direccionCompleta })
+      });
+
+      const data = await res.json();
+
+      if (!data.lat || !data.lng) {
+        alert("❌ No se pudo obtener la ubicación.");
+        setLoading(false);
+        return;
+      }
+
+      const origenCoords = [data.lat, data.lng];
       const rutaInfo = await getRutaConMetricas(origenCoords, destinoCoords);
 
       const simulacion = {
-        direccion: label,
+        direccion: data.direccion_normalizada,
         distancia_m: rutaInfo.distancia,
         duracion_s: rutaInfo.duracion
       };
@@ -83,11 +69,11 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
           ruta: rutaInfo.ruta,
           distancia: rutaInfo.distancia,
           duracion: rutaInfo.duracion,
-          direccion: label
+          direccion: data.direccion_normalizada
         });
       }
     } catch (err) {
-      console.error("❌ Error en simulación:", err);
+      console.error("❌ Error en simulación:", err.message);
       alert("Error al conectar con el backend.");
     }
 
@@ -104,27 +90,18 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
         styles={{ container: base => ({ ...base, marginBottom: "1rem" }) }}
       />
 
-      <label>Dirección:</label>
+      <label>Dirección completa:</label>
       <input
         type="text"
         value={direccionInput}
-        onChange={(e) => {
-          setDireccionInput(e.target.value);
-          buscarSugerencias(e.target.value, municipio);
-        }}
-        placeholder="Ej: Av. Córdoba 2350"
+        onChange={(e) => setDireccionInput(e.target.value)}
+        placeholder="Ej: Av. Santa Fe 883"
         style={{ padding: "0.7rem", width: "100%", marginBottom: "1rem" }}
       />
 
-      <Select
-        options={sugerencias}
-        onChange={(opt) => simularEmergencia(opt.value, opt.label)}
-        placeholder="Seleccioná una dirección sugerida"
-        isSearchable={false}
-        styles={{ container: base => ({ ...base, marginBottom: "1rem" }) }}
-      />
-
-      {loading && <p>🕐 Simulando emergencia...</p>}
+      <button onClick={simularEmergencia} disabled={loading}>
+        {loading ? "🕐 Simulando..." : "🚑 Simular emergencia"}
+      </button>
 
       {resultado && (
         <div style={{ marginTop: "1rem", background: "#e3ffe3", padding: "1rem", borderRadius: "8px" }}>
@@ -139,4 +116,5 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
     </div>
   );
 }
+
 
