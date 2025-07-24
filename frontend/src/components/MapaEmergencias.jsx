@@ -2,8 +2,6 @@ import { useEffect } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getRutaConMetricas } from "../servicios/ruteo.js";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
