@@ -20,9 +20,9 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
   const [historial, setHistorial] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const destinoCoords = [-34.607, -58.449]; // 🏥 Centro médico fijo
+  const destinoCoords = [-34.607, -58.449]; // Centro médico fijo
 
-  // 🔍 Buscar sugerencias desde el backend (evita CORS)
+  // 🔍 Buscar sugerencias predictivas desde backend
   async function buscarSugerencias(texto, partido) {
     if (!texto || !partido) return;
 
@@ -36,7 +36,14 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
       });
 
       if (!res.ok) throw new Error(`Error backend: ${res.status}`);
+
       const data = await res.json();
+
+      if (!Array.isArray(data.features)) {
+        console.warn("⚠️ No se encontraron sugerencias.");
+        setSugerencias([]);
+        return;
+      }
 
       const opciones = data.features
         .filter(f => f.properties?.confidence >= 0.8)
@@ -48,6 +55,7 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
       setSugerencias(opciones);
     } catch (err) {
       console.error("❌ Error en autocompletado:", err.message);
+      setSugerencias([]);
     }
   }
 
@@ -88,7 +96,6 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
 
   return (
     <div>
-      {/* 🏙️ Menú desplegable de municipio */}
       <label>Municipio:</label>
       <Select
         options={municipios.map(m => ({ value: m, label: m }))}
@@ -97,7 +104,6 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
         styles={{ container: base => ({ ...base, marginBottom: "1rem" }) }}
       />
 
-      {/* ✍️ Campo de dirección + sugerencias */}
       <label>Dirección:</label>
       <input
         type="text"
@@ -133,3 +139,4 @@ export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
     </div>
   );
 }
+
