@@ -31,9 +31,6 @@ class CoordenadasRuta(BaseModel):
 class Direccion(BaseModel):
     texto: str
 
-class TextoBusqueda(BaseModel):
-    texto: str
-
 # 🌍 Geocodificación → coordenadas
 @app.post("/geocodificar")
 def geocodificar(direccion: Direccion):
@@ -63,26 +60,6 @@ def geocodificar(direccion: Direccion):
         }
     except:
         return {"error": "No se pudo extraer coordenadas"}
-
-# 🧠 Autocompletado predictivo (proxy ORS)
-@app.post("/autocomplete")
-def autocomplete(texto: TextoBusqueda):
-    ORS_API_KEY = os.getenv("ORS_API_KEY")
-    url = "https://api.openrouteservice.org/geocode/autocomplete"
-    params = {
-        "api_key": ORS_API_KEY,
-        "text": texto.texto,
-        "size": 5
-    }
-    res = requests.get(url, params=params)
-
-    if res.status_code != 200:
-        return {
-            "error": f"Autocompletado falló ({res.status_code})",
-            "detalle": res.text
-        }
-
-    return res.json()
 
 # 🛣️ Ruta entre coordenadas
 @app.post("/ruta-ors")
