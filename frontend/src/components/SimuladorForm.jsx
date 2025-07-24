@@ -1,119 +1,94 @@
 import { useState } from 'react';
 import MetricasEficiencia from './MetricasEficiencia.jsx';
-import ComparadorEstrategias from './ComparadorEstrategias.jsx';
+import { getRutaConMetricas } from '../utils/ruteo.js';
 
 export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
-
+  const [direccion, setDireccion] = useState("");
   const [resultado, setResultado] = useState(null);
   const [historial, setHistorial] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const coordenadasZona = {
-    Palermo: [-34.578, -58.429],
-    Belgrano: [-34.563, -58.460],
-    Recoleta: [-34.587, -58.392],
-    Caballito: [-34.618, -58.441],
-    Barracas: [-34.630, -58.373],
+  // 🏥 Centro médico fijo (podés hacerlo dinámico en el futuro)
+  const destinoCoords = [-34.607, -58.449];
+
+  const enviar = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setResultado(null);
+
+    try {
+      // 🔍 Paso 1: geocodificar dirección ingresada
+      const geoRes = await fetch("https://simulador-backend-fauv.onrender.com/geocodificar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto: direccion })
+      });
+
+      const geoData = await geoRes.json();
+      if (!geoData.lat || !geoData.lng) {
+        alert("⚠️ Dirección inválida o no encontrada.");
+        setLoading(false);
+        return;
+      }
+
+      const origenCoords = [geoData.lat, geoData.lng];
+
+      // 🛣️ Paso 2: obtener ruta entre origen y centro
+      const rutaInfo = await getRutaConMetricas(origenCoords, destinoCoords);
+
+      const simulacion = {
+        direccion: geoData.direccion_normalizada,
+        distancia_m: rutaInfo.distancia,
+        duracion_s: rutaInfo.duracion
+      };
+
+      setResultado(simulacion);
+      setHistorial(prev => [...prev, simulacion]);
+
+      if (onCoordenadasSeleccionadas) {
+        onCoordenadasSeleccionadas({
+          origen: origenCoords,
+          destino: destinoCoords,
+          ruta: rutaInfo.ruta,
+          distancia: rutaInfo.distancia,
+          duracion: rutaInfo.duracion
+        });
+      }
+
+    } catch (err) {
+      console.error("❌ Error al simular:", err);
+      alert("Error al conectar con el backend.");
+    }
+
+    setLoading(false);
   };
-
-  const coordenadasCentro = {
-    "Centro Norte": [-34.560, -58.420],
-    "Centro Este": [-34.580, -58.425],
-    "Centro Sur": [-34.640, -58.400],
-  };
-
-  function determinarCentro(zona) {
-    if (["Palermo", "Recoleta"].includes(zona)) return "Centro Norte";
-    if (["Belgrano", "Caballito"].includes(zona)) return "Centro Este";
-    return "Centro Sur";
-  }
-
-const enviar = async (e) => {
-  e.preventDefault();
-  const zona = e.target.zona.value;
-  const tipo_via = e.target.tipo_via.value;
-  const distancia_km = parseFloat(e.target.distancia_km.value);
-
-  let datos;
-  try {
-    const res = await fetch("https://simulador-backend-fauv.onrender.com/asignar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ zona, tipo_via, distancia_km })
-    });
-
-    if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
-
-    datos = await res.json();
-    console.log("✅ Respuesta del backend:", datos);
-    setResultado(datos);
-  } catch (error) {
-    console.error("❌ Error al conectar con el backend:", error.message);
-    return; // ⛔ Cancelar resto si hay error
-  }
-
-  const centro = determinarCentro(zona);
-  const origenCoords = coordenadasCentro[centro];
-  const destinoCoords = coordenadasZona[zona];
-
-  if (onCoordenadasSeleccionadas) {
-    console.log("🛰️ Emitiendo coordenadas:", origenCoords, destinoCoords);
-    onCoordenadasSeleccionadas({ origen: origenCoords, destino: destinoCoords });
-  }
-
-  const simulacion = {
-    id: datos.ambulancia,
-    zona: datos.zona,
-    tipo_via: datos.tipo_via,
-    eta_minutos: datos.eta_minutos,
-    centro: determinarCentro(datos.zona),
-    excedido: false
-  };
-
-  setHistorial(prev => [...prev, simulacion]);
-};
-
 
   return (
     <div>
       <form onSubmit={enviar}>
-        <label>Zona:
-          <select name="zona" required>
-            <option value="">-- Seleccionar zona --</option>
-            <option value="Palermo">Palermo</option>
-            <option value="Belgrano">Belgrano</option>
-            <option value="Recoleta">Recoleta</option>
-            <option value="Caballito">Caballito</option>
-            <option value="Barracas">Barracas</option>
-          </select>
+        <label>
+          Dirección de la emergencia:<br />
+          <input
+            type="text"
+            value={direccion}
+            onChange={(e) => setDireccion(e.target.value)}
+            placeholder="Ej: Av. Córdoba 2350, CABA"
+            required
+            style={{ padding: "0.7rem", width: "100%", marginBottom: "1rem" }}
+          />
         </label><br />
-
-        <label>Tipo de vía:
-          <select name="tipo_via">
-            <option value="avenida">Avenida</option>
-            <option value="calle">Calle</option>
-          </select>
-        </label><br />
-
-        <label>Distancia (km): <input type="number" step="0.1" name="distancia_km" required /></label><br />
-        <button type="submit">Asignar Ambulancia</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "🕐 Simulando..." : "🚑 Simular emergencia"}
+        </button>
       </form>
 
       {resultado && (
-        <>
-          <div style={{ marginTop: "1rem", background: "#e3ffe3", padding: "1rem", borderRadius: "8px" }}>
-            <h2>🟢 Resultado (Tradicional)</h2>
-            <p>Ambulancia: <strong>{resultado.ambulancia}</strong></p>
-            <p>ETA: <strong>{resultado.eta_minutos} minutos</strong></p>
-            <p>Zona: {resultado.zona}</p>
-            <p>Tipo de vía: {resultado.tipo_via}</p>
-          </div>
-
-          <ComparadorEstrategias
-            zona={resultado.zona}
-            tipo_via={resultado.tipo_via}
-            distancia_km={parseFloat(resultado.eta_minutos) / (resultado.tipo_via === "avenida" ? 1.0 : 1.5)}
-          />
-        </>
+        <div style={{ marginTop: "1rem", background: "#e3ffe3", padding: "1rem", borderRadius: "8px" }}>
+          <h2>🟢 Resultado de simulación</h2>
+          <p>Dirección: <strong>{resultado.direccion}</strong></p>
+          <p>Distancia estimada: <strong>{(resultado.distancia_m / 1000).toFixed(2)} km</strong></p>
+          <p>Duración estimada: <strong>{Math.round(resultado.duracion_s / 60)} minutos</strong></p>
+        </div>
       )}
 
       <MetricasEficiencia historial={historial} />
