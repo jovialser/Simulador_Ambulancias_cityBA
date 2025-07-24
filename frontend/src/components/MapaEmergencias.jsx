@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { getRutaConMetricas } from "../servicios/ruteo.js";
 
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
@@ -15,6 +14,7 @@ L.Marker.prototype.options.icon = L.icon({
   shadowSize: [41, 41]
 });
 
+import { getRutaConMetricas } from "../servicios/ruteo.js";
 export default function MapaEmergencias({ origen, destino }) {
   useEffect(() => {
     console.log("🧭 Coordenadas recibidas:", { origen, destino });
