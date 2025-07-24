@@ -3,12 +3,10 @@ import SimuladorForm from "./SimuladorForm.jsx";
 import MapaEmergencias from "./MapaEmergencias.jsx";
 
 export default function RutaVisual() {
-  const [origen, setOrigen] = useState(null);
-  const [destino, setDestino] = useState(null);
+  const [simulacion, setSimulacion] = useState(null);
 
-  function actualizar({ origen, destino }) {
-    setOrigen(origen);
-    setDestino(destino);
+  function actualizar(simulacionCompleta) {
+    setSimulacion(simulacionCompleta);
   }
 
   return (
@@ -17,10 +15,20 @@ export default function RutaVisual() {
         <SimuladorForm onCoordenadasSeleccionadas={actualizar} />
       </div>
       <div style={{ flex: 1, minWidth: "300px" }}>
-        {origen && destino && (
-          <MapaEmergencias origen={origen} destino={destino} />
+        {simulacion && (
+          <>
+            <p>📍 Dirección geocodificada: <strong>{simulacion.direccion || "Ubicación ingresada"}</strong></p>
+            <MapaEmergencias
+              origen={simulacion.origen}
+              destino={simulacion.destino}
+              ruta={simulacion.ruta}
+              distancia={simulacion.distancia}
+              duracion={simulacion.duracion}
+            />
+          </>
         )}
       </div>
     </div>
   );
 }
+
