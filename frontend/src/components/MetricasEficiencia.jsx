@@ -1,70 +1,70 @@
 import { useState, useEffect } from "react";
 
 export default function MetricasEficiencia({ historial }) {
-  const [simulaciones, setSimulaciones] = useState(0);
-  const [etaPromedio, setEtaPromedio] = useState(0);
-  const [centros, setCentros] = useState({});
-  const [exito, setExito] = useState(0);
+  const [metricas, setMetricas] = useState({
+    totalSimulaciones: 0,
+    etaPromedio: 0,
+    distanciaPromedio: 0,
+    usoPorCentro: {},
+  });
 
-// 👇 ACA VA el estilo compartido
   const tarjetaEstilo = {
-    background: "#ffffff",
+    background: "#f0f0f0",
     borderRadius: "8px",
     padding: "1rem",
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-    minWidth: "180px",
-    flex: "1"
+    flex: "1",
+    minWidth: "150px",
+    textAlign: "center",
   };
 
   useEffect(() => {
     if (!historial || historial.length === 0) return;
 
-    setSimulaciones(historial.length);
+    const totalSimulaciones = historial.length;
+    const totalDuracion = historial.reduce((acc, s) => acc + s.duracion, 0);
+    const totalDistancia = historial.reduce((acc, s) => acc + s.distancia, 0);
 
-    const totalETA = historial.reduce((acc, s) => acc + s.eta_minutos, 0);
-    setEtaPromedio((totalETA / historial.length).toFixed(2));
+    const usoPorCentro = historial.reduce((acc, s) => {
+      acc[s.centro] = (acc[s.centro] || 0) + 1;
+      return acc;
+    }, {});
 
-    const centrosEstado = {};
-    let exitos = 0;
-
-    historial.forEach(sim => {
-      centrosEstado[sim.centro] = (centrosEstado[sim.centro] || 0) + 1;
-      if (!sim.excedido) exitos += 1;
+    setMetricas({
+      totalSimulaciones,
+      etaPromedio: (totalDuracion / totalSimulaciones / 60).toFixed(1), // en minutos
+      distanciaPromedio: (totalDistancia / totalSimulaciones / 1000).toFixed(1), // en km
+      usoPorCentro,
     });
-
-    setCentros(centrosEstado);
-    setExito(((exitos / historial.length) * 100).toFixed(1));
   }, [historial]);
 
   return (
-  <div style={{ marginTop: "2rem" }}>
-    <h2>📈 Métricas de Eficiencia</h2>
-
-    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "1rem" }}>
-      <div style={tarjetaEstilo}>
-        <h3>🚑 Simulaciones</h3>
-        <p>{simulaciones}</p>
+    <div style={{ marginTop: "2rem", color: '#333' }}>
+      <h3 style={{color: 'white', textAlign: 'left'}}>📈 Métricas de Eficiencia</h3>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "1rem" }}>
+        <div style={tarjetaEstilo}>
+          <h4>🚑 Simulaciones</h4>
+          <p style={{fontSize: '1.5rem', margin: 0}}>{metricas.totalSimulaciones}</p>
+        </div>
+        <div style={tarjetaEstilo}>
+          <h4>⏱️ ETA Promedio</h4>
+          <p style={{fontSize: '1.5rem', margin: 0}}>{metricas.etaPromedio} min</p>
+        </div>
+        <div style={tarjetaEstilo}>
+          <h4>📏 Dist. Promedio</h4>
+          <p style={{fontSize: '1.5rem', margin: 0}}>{metricas.distanciaPromedio} km</p>
+        </div>
       </div>
-
-      <div style={tarjetaEstilo}>
-        <h3>⏱️ ETA promedio</h3>
-        <p>{etaPromedio} min</p>
-      </div>
-
-      <div style={tarjetaEstilo}>
-        <h3>✅ Tasa de éxito</h3>
-        <p>{exito}%</p>
-      </div>
-
-      <div style={tarjetaEstilo}>
-        <h3>🏥 Centros</h3>
-        <ul style={{ paddingLeft: "1rem" }}>
-          {Object.entries(centros).map(([c, v]) => (
-            <li key={c}>{c}: {v} / 5</li>
-          ))}
-        </ul>
-      </div>
+      {Object.keys(metricas.usoPorCentro).length > 0 && (
+        <div style={{...tarjetaEstilo, flexBasis: '100%', marginTop: '1rem', textAlign: 'left'}}>
+          <h4>🏥 Uso por Centro</h4>
+          <ul style={{ paddingLeft: "1.5rem", margin: 0 }}>
+            {Object.entries(metricas.usoPorCentro).map(([centro, count]) => (
+              <li key={centro}>{centro}: {count}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
 }
