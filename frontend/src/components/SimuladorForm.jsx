@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Select from 'react-select';
 import { getRutaConMetricas } from '../servicios/ruteo.js';
-import { centrosMedicos, municipios } from '../data/constants.js';
+import { centrosMedicosData, nombresDeCentros } from '../data/constants.js';
 
 export default function SimuladorForm({ onSimulacion, onClear }) {
   const [centroSeleccionado, setCentroSeleccionado] = useState(null);
@@ -20,9 +20,10 @@ export default function SimuladorForm({ onSimulacion, onClear }) {
     onClear(); // Limpia la simulación anterior en el componente padre
 
     try {
-      const destinoCoords = centrosMedicos[centroSeleccionado];
-      // Extraemos el nombre del municipio del nombre del hospital para mejorar la geocodificación
-      const municipio = centroSeleccionado.split('(')[1].replace(')', '');
+      // Accedemos a los datos del centro de forma segura
+      const centroData = centrosMedicosData[centroSeleccionado];
+      const destinoCoords = centroData.coords;
+      const municipio = centroData.municipio;
       const direccionCompleta = `${direccionInput}, ${municipio}, Buenos Aires, Argentina`;
 
       const rutaInfo = await getRutaConMetricas(direccionCompleta, destinoCoords);
@@ -52,7 +53,7 @@ export default function SimuladorForm({ onSimulacion, onClear }) {
       <h3 style={{ marginTop: 0 }}>Configurar Simulación</h3>
       <label>Centro Médico de Origen:</label>
       <Select
-        options={municipios.map(m => ({ value: m, label: m }))}
+        options={nombresDeCentros.map(nombre => ({ value: nombre, label: nombre }))}
         onChange={(opt) => setCentroSeleccionado(opt.value)}
         placeholder="Seleccioná un hospital..."
         styles={{ container: base => ({ ...base, marginBottom: "1rem" }) }}
