@@ -7,7 +7,6 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "postinstall": "npx -y playwright install --with-deps"
   },
   "dependencies": {
     "@astrojs/react": "^3.6.0",
