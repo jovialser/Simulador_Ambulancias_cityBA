@@ -1,11 +1,10 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import vercel from '@astrojs/vercel/serverless';
+import vercel from '@astrojs/vercel'; // ← este es el cambio
 
-// https://astro.build/config
 export default defineConfig({
   output: 'server',
-  // El adaptador de Vercel para Server-Side Rendering
-  adapter: vercel(),
+  adapter: vercel(), // ← no necesita /serverless
   integrations: [react()]
 });
+
