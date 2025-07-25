@@ -1,24 +1,11 @@
-{
-  "name": "simulador-frontend-astro",
-  "type": "module",
-  "version": "0.0.1",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "dependencies": {
-    "@astrojs/vercel": "^7.7.2",
-    "@astrojs/react": "^3.6.0",
-    "astro": "^4.11.0",
-    "leaflet": "^1.9.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-leaflet": "^4.2.1",
-    "react-select": "^5.8.0"
-  },
-  "devDependencies": {
-    "@types/leaflet": "^1.9.12"
-  }
-}
+import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+import vercel from '@astrojs/vercel/serverless';
+
+// https://astro.build/config
+export default defineConfig({
+  output: 'server',
+  // El adaptador de Vercel para Server-Side Rendering
+  adapter: vercel(),
+  integrations: [react()]
+});
