@@ -1,40 +1,55 @@
 ---
-import RutaVisual from "../components/RutaVisual.jsx";
+import RutaVisual from '../components/RutaVisual.jsx';
 ---
 
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <title>Simulador Ambulancia CABA</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  </head>
-  <body style="padding: 1rem; font-family: sans-serif;">
-    <h1>🚑 Simulador de Emergencia</h1>
-
-<section id="backend-status" style="margin: 1.5rem 0;">
-  <button id="activar-btn" onclick="activarBackend()" style="padding: 0.8rem 1.2rem; font-size: 1rem; background: #0077cc; color: white; border: none; border-radius: 6px; cursor: pointer;">
-    ⚙️ Activar Backend
-  </button>
-</section>
-
-<script>
-  async function activarBackend() {
-    const boton = document.getElementById("activar-btn");
-    try {
-      const res = await fetch("https://simulador-backend-fauv.onrender.com/");
-      if (res.ok) {
-        const contenedor = document.getElementById("backend-status");
-        contenedor.innerHTML = `<p style="color: green; font-weight: bold;">✅ Backend listo y operativo</p>`;
-      } else {
-        alert("⚠️ No se pudo activar el backend");
-      }
-    } catch (err) {
-      console.error("❌ Error al despertar backend:", err.message);
-      alert("Error al intentar activar el backend");
-    }
-  }
-</script>
-<!-- Contiene formulario, lógica y visualización -->
-<RutaVisual client:only="react" />
-  </body>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Simulador de Rutas de Emergencia</title>
+	</head>
+	<body>
+		<header>
+			<h1>🚑 Simulador de Rutas de Emergencia</h1>
+			<p>
+			  Herramienta para simular rutas óptimas de vehículos de emergencia, minimizando tiempos de respuesta.
+			</p>
+		</header>
+		<main>
+			<!-- La directiva client:load es crucial para que el componente de React sea interactivo -->
+			<RutaVisual client:load />
+		</main>
+	</body>
 </html>
+<style is:global>
+	:root {
+		--accent: 136, 58, 234;
+		--accent-light: 224, 204, 250;
+		--accent-dark: 49, 10, 101;
+		--accent-gradient: linear-gradient(45deg, rgb(var(--accent)), rgb(var(--accent-light)) 30%, white 60%);
+	}
+	html {
+		font-family: system-ui, sans-serif;
+		background: #13151a;
+		background-size: 224px;
+		color: white;
+	}
+	body {
+		margin: 0;
+	}
+	main {
+		margin: auto;
+		padding: 1rem;
+		width: 800px;
+		max-width: calc(100% - 2rem);
+		color: white;
+		font-size: 20px;
+		line-height: 1.6;
+	}
+	header {
+		text-align: center;
+		padding: 2rem 1rem;
+	}
+</style>
