@@ -5,10 +5,6 @@ import react from '@astrojs/react';
 export default defineConfig({
 integrations: [react()],
   output: 'server', // Recomendado para Vercel
-  vite: {
-    build: {
-      assetsInlineLimit: 0 // 👈 fuerza que las imágenes se generen como archivos
-    }
-  }
+  
 });
 
