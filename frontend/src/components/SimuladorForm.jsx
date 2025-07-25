@@ -1,118 +1,79 @@
 import { useState } from 'react';
 import Select from 'react-select';
-import MetricasEficiencia from './MetricasEficiencia.jsx';
 import { getRutaConMetricas } from '../servicios/ruteo.js';
+import { centrosMedicos, municipios } from '../data/constants.js';
 
-// 📍 Centros médicos por municipio
-const centrosMedicos = {
-  "Ciudad de Buenos Aires": [-34.607, -58.449],
-  "Lanús": [-34.706, -58.398],
-  "Quilmes": [-34.720, -58.264],
-  "San Martín": [-34.575, -58.552],
-  "Tres de Febrero": [-34.605, -58.563],
-  "La Matanza": [-34.640, -58.610]
-};
-
-const municipios = Object.keys(centrosMedicos);
-
-export default function SimuladorForm({ onCoordenadasSeleccionadas }) {
-  const [municipio, setMunicipio] = useState(null);
+export default function SimuladorForm({ onSimulacion, onClear }) {
+  const [centroSeleccionado, setCentroSeleccionado] = useState(null);
   const [direccionInput, setDireccionInput] = useState("");
-  const [resultado, setResultado] = useState(null);
-  const [historial, setHistorial] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function simularEmergencia() {
-    setLoading(true);
-    setResultado(null);
-
-    if (!municipio || !direccionInput) {
-      alert("⚠️ Seleccioná municipio y completá la dirección.");
-      setLoading(false);
+    if (!centroSeleccionado || !direccionInput) {
+      setError("⚠️ Por favor, selecciona un centro médico y completa la dirección.");
       return;
     }
 
-    const destinoCoords = centrosMedicos[municipio];
-    const direccionCompleta = `${direccionInput}, ${municipio}, Buenos Aires, Argentina`;
+    setLoading(true);
+    setError("");
+    onClear(); // Limpia la simulación anterior en el componente padre
 
     try {
-      const res = await fetch("https://simulador-backend-fauv.onrender.com/geocodificar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texto: direccionCompleta })
-      });
+      const destinoCoords = centrosMedicos[centroSeleccionado];
+      // Extraemos el nombre del municipio del nombre del hospital para mejorar la geocodificación
+      const municipio = centroSeleccionado.split('(')[1].replace(')', '');
+      const direccionCompleta = `${direccionInput}, ${municipio}, Buenos Aires, Argentina`;
 
-      const data = await res.json();
-
-      if (!data.lat || !data.lng) {
-        alert("❌ No se pudo obtener la ubicación.");
-        setLoading(false);
-        return;
-      }
-
-      const origenCoords = [data.lat, data.lng];
-      const rutaInfo = await getRutaConMetricas(origenCoords, destinoCoords);
+      const rutaInfo = await getRutaConMetricas(direccionCompleta, destinoCoords);
 
       const simulacion = {
-        direccion: data.direccion_normalizada,
-        distancia_m: rutaInfo.distancia,
-        duracion_s: rutaInfo.duracion
+        id: new Date().getTime(),
+        origen: rutaInfo.origen,
+        destino: destinoCoords,
+        ruta: rutaInfo.ruta,
+        distancia: rutaInfo.distancia,
+        duracion: rutaInfo.duracion,
+        direccionNormalizada: rutaInfo.direccionNormalizada,
+        centro: centroSeleccionado,
       };
 
-      setResultado(simulacion);
-      setHistorial(prev => [...prev, simulacion]);
-
-      if (onCoordenadasSeleccionadas) {
-        onCoordenadasSeleccionadas({
-          origen: origenCoords,
-          destino: destinoCoords,
-          ruta: rutaInfo.ruta,
-          distancia: rutaInfo.distancia,
-          duracion: rutaInfo.duracion,
-          direccion: data.direccion_normalizada
-        });
-      }
+      onSimulacion(simulacion);
     } catch (err) {
       console.error("❌ Error en simulación:", err.message);
-      alert("Error al conectar con el backend.");
+      setError(`Error en la simulación: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (
     <div>
-      <label>Municipio:</label>
+      <h3 style={{ marginTop: 0 }}>Configurar Simulación</h3>
+      <label>Centro Médico de Origen:</label>
       <Select
         options={municipios.map(m => ({ value: m, label: m }))}
-        onChange={(opt) => setMunicipio(opt.value)}
-        placeholder="Seleccioná municipio"
+        onChange={(opt) => setCentroSeleccionado(opt.value)}
+        placeholder="Seleccioná un hospital..."
         styles={{ container: base => ({ ...base, marginBottom: "1rem" }) }}
       />
 
-      <label>Dirección completa:</label>
+      <label>Dirección de la Emergencia:</label>
       <input
         type="text"
         value={direccionInput}
         onChange={(e) => setDireccionInput(e.target.value)}
         placeholder="Ej: Av. Santa Fe 883"
-        style={{ padding: "0.7rem", width: "100%", marginBottom: "1rem" }}
+        style={{ padding: "0.7rem", width: "calc(100% - 1.4rem)", marginBottom: "1rem", borderRadius: '4px', border: '1px solid #ccc', color: '#333' }}
       />
 
-      <button onClick={simularEmergencia} disabled={loading}>
+      <button onClick={simularEmergencia} disabled={loading} style={{width: '100%', padding: '0.8rem', fontSize: '1rem'}}>
         {loading ? "🕐 Simulando..." : "🚑 Simular emergencia"}
       </button>
 
-      {resultado && (
-        <div style={{ marginTop: "1rem", background: "#e3ffe3", padding: "1rem", borderRadius: "8px" }}>
-          <h2>🟢 Resultado de simulación</h2>
-          <p>Dirección detectada: <strong>{resultado.direccion}</strong></p>
-          <p>Distancia estimada: <strong>{(resultado.distancia_m / 1000).toFixed(2)} km</strong></p>
-          <p>Duración estimada: <strong>{Math.round(resultado.duracion_s / 60)} minutos</strong></p>
-        </div>
+      {error && (
+        <p style={{ color: '#ff6b6b', marginTop: '1rem' }}>{error}</p>
       )}
-
-      <MetricasEficiencia historial={historial} />
     </div>
   );
 }
